@@ -1,33 +1,18 @@
-#include <ros/ros.h>
-#include <image_transport/image_transport.h>
-#include <cv_bridge/cv_bridge.h>
-#include <sensor_msgs/image_encodings.h>
-#include <opencv2/opencv.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/features2d.hpp>
+#include "include/VIOAppNode.hpp"
 
-#include "ShuminSLAM/feature_tracker.hpp"
-
-using namespace std;
-
-static const std::string OPENCV_WINDOW = "Raw Image window";
-
-class FeatureTrackerNode {
-public:
-  FeatureTrackerNode()
-    : it_(nh_), inited_(false) {
-    image_sub_ = it_.subscribe("/usb_cam/image_raw", 5, 
-      &FeatureTrackerNode::imageCb, this);
+VIOAppNode::VIOAppNode()
+   : it_(nh_), inited_(false) {
+    image_sub_ = it_.subscribe(input_image_topic_name, 5, 
+      &VIOAppNode::NewImageCallback, this);
     cv::namedWindow(OPENCV_WINDOW);
-    ROS_INFO("Tracker Node Initialized.");
-  }
+    ROS_INFO("VIO App Node Initialized.");
+}
 
-  ~FeatureTrackerNode() {
-    cv::destroyWindow(OPENCV_WINDOW);
-  }
+VIOAppNode:: ~VIOAppNode() {
+  cv::destroyWindow(OPENCV_WINDOW);
+}
 
-  void imageCb(const sensor_msgs::ImageConstPtr& msg) {
+void VIOAppNode::NewImageCallback(const sensor_msgs::ImageConstPtr& msg) {
     cv_bridge::CvImagePtr cv_ptr;
     namespace enc = sensor_msgs::image_encodings;
 
@@ -40,19 +25,31 @@ public:
 
     if (cv_ptr->image.rows > 400 && cv_ptr->image.cols > 600){
         if (!inited_) {
-          feature_tracker_.DetectFeatureInFirstFrame(cv_ptr->image, last_kp_, last_desc_);
+          feature_tracker_.DetectFeatureInFirstFrame(cv_ptr->image,
+                                            last_keyframe_kp_, last_keyframe_desc_);
           inited_ = true;
         } else {
+          addNewFrame(cv_ptr->image);
 	  trackFeatures(cv_ptr->image);
         }
     }
-  }
-  void trackFeatures(cv::Mat img) {
+}
+
+void VIOAppNode::addNewFrame(cv::Mat img) {
+  vector<cv::KeyPoint> kp;
+  cv::Mat desc;
+  vector<cv::DMatch> matches;
+  feature_tracker_.TrackFeature(last_keyframe_desc_, img, kp, desc, matches);
+
+  
+}
+
+void VIOAppNode::trackFeatures(cv::Mat img) {
     vector<cv::KeyPoint> kp;
     cv::Mat desc;
     vector<cv::DMatch> matches;
 
-    feature_tracker_.TrackFeature(last_desc_, img, kp, desc, matches);
+    feature_tracker_.TrackFeature(last_keyframe_desc_, img, kp, desc, matches);
 
     cv::Mat output_img;
     vector<cv::KeyPoint> kp_draw;
@@ -63,32 +60,15 @@ public:
     drawKeypoints(output_img, kp_draw, output_img, cv::Scalar(255, 0, 0));
 
     for (int i = 0; i < matches.size(); ++i) {
-      line(output_img, kp[matches[i].trainIdx].pt, last_kp_[matches[i].queryIdx].pt,
+      line(output_img, kp[matches[i].trainIdx].pt, last_keyframe_kp_[matches[i].queryIdx].pt,
            cv::Scalar(255, 0, 0));
     }
 
-    desc.copyTo(last_desc_);
-    last_kp_.swap(kp);
+    desc.copyTo(last_keyframe_desc_);
+    last_keyframe_kp_.swap(kp);
 
     cv::imshow(OPENCV_WINDOW, output_img);
     cv::waitKey(3);
   }
 
- private:
-  ros::NodeHandle nh_;
-  image_transport::ImageTransport it_;
-  image_transport::Subscriber image_sub_;
-  image_transport::Publisher image_pub_;
 
-  bool inited_;
-  FeatureTracker feature_tracker_;
-  cv::Mat last_desc_;
-  vector<cv::KeyPoint> last_kp_;
-};
-
-int main(int argc, char** argv) {
-  ros::init(argc, argv, "Feature_Tracker");
-  FeatureTrackerNode ic;
-  ros::spin();
-  return 0;
-}
