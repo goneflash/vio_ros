@@ -126,7 +126,7 @@ include_directories(
 # add_library(vio_app
 #   src/${PROJECT_NAME}/vio_app.cpp
 # )
-add_library(vio_app_node src/vio_app_node.cpp)
+add_library(vio_app_node SHARED src/vio_app_node.cpp)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries

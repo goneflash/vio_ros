@@ -54,7 +54,8 @@ void VIOAppNode::AddNewFrame(const cv::Mat &img) {
       last_keyframe_kp_.swap(kp);
 
       // Should use a new thread to do this.
-      TriangulateFeatures();
+      if (keyframe_count_ % 10 == 0)
+        TriangulateFeatures();
 
     } else {
       ROS_INFO("Dropped a new frame.");
