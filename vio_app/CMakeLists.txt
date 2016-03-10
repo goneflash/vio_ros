@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
 )
 
+find_package( Eigen3 REQUIRED ) 
 find_package( ShuminSLAM REQUIRED )
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -116,6 +117,8 @@ catkin_package(
 ## Your package locations should be listed before other locations
 # include_directories(include)
 include_directories(
+  include
+  ${EIGEN3_INCLUDE_DIR}
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -123,6 +126,7 @@ include_directories(
 # add_library(vio_app
 #   src/${PROJECT_NAME}/vio_app.cpp
 # )
+add_library(vio_app_node src/vio_app_node.cpp)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -130,15 +134,21 @@ include_directories(
 # add_dependencies(vio_app ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-add_executable(vio_app_node src/vio_app_node.cpp)
+add_executable(vio_app src/main.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(vio_app_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(vio_app_node
+  pose_optimizer
+  feature_tracker
+  landmark_server
+  ${catkin_LIBRARIES}
+)
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(vio_app_node
-  feature_tracker
+target_link_libraries(vio_app
+  vio_app_node
   ${catkin_LIBRARIES}
 )
 
