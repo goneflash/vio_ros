@@ -5,7 +5,7 @@ VIOAppNode::VIOAppNode(const string &input_image_topic)
       inited_(false),
       use_keyframe_(true),
       keyframe_count_(0),
-      visualize_3d_(false) {
+      visualize_3d_(true) {
   visualizer_ = new PoseLandmarkROSVisualizer(&nh_);
 
   image_sub_ =

@@ -1,7 +1,11 @@
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <pcl_ros/point_cloud.h>
+#include <pcl_conversions/pcl_conversions.h>
+
+#include <pcl/conversions.h>
 #include <pcl/point_types.h>
+#include <pcl/PCLPointCloud2.h>
 
 class PoseLandmarkROSVisualizer {
  public:
@@ -25,21 +29,15 @@ class PoseLandmarkROSVisualizer {
       landmarks_.push_back(pcl::PointXYZ(x, y, z));
     }
 
-    /*
-        sensor_msgs::PointCloud2::Ptr msg (new sensor_msgs::PointCloud2);
+    pcl::PCLPointCloud2 pcl_pc2;
+    pcl::toPCLPointCloud2(landmarks_, pcl_pc2);
 
-        msg->header.frame_id = "landmark_frame";
-        msg->height = msg->width = 1;
+    sensor_msgs::PointCloud2 msg;
+    pcl_conversions::fromPCL(pcl_pc2, msg); 
+    msg.header.frame_id = "map";
 
-        pcl::PCLPointCloud2 pcl_pc2;
-        pcl_conversions::toPCL(*input,pcl_pc2);
-        pcl::PointCloud<pcl::PointXYZ>::Ptr temp_cloud(new
-       pcl::PointCloud<pcl::PointXYZ>);
-        pcl::fromPCLPointCloud2(pcl_pc2,*temp_cloud);
+    landmark_pub_.publish(msg);
 
-
-        msg->points.push_back (pcl::PointXYZ(1.0, 2.0, 3.0));
-    */
     return true;
   }
 
