@@ -5,6 +5,8 @@ project(vio_app)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  pcl_conversions
+  pcl_ros
   cv_bridge
   image_transport
   roscpp

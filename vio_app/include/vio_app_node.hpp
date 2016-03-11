@@ -10,6 +10,8 @@
 #include "ShuminSLAM/landmark_server.hpp"
 #include "ShuminSLAM/pose_optimizer.hpp"
 
+#include "pose_landmark_ros_visualizer.hpp"
+
 #include <string>
 
 using namespace std;
@@ -44,6 +46,9 @@ class VIOAppNode {
   KeyframeSelector keyframe_selector_;
 
   LandmarkServer landmark_server_;
-
   PoseOptimizer pose_optimizer_;
+
+  // TODO: use smart pointer
+  bool visualize_3d_;
+  PoseLandmarkROSVisualizer *visualizer_;
 };

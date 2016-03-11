@@ -1,7 +1,13 @@
 #include "vio_app_node.hpp"
 
 VIOAppNode::VIOAppNode(const string &input_image_topic)
-    : it_(nh_), inited_(false), use_keyframe_(true), keyframe_count_(0) {
+    : it_(nh_),
+      inited_(false),
+      use_keyframe_(true),
+      keyframe_count_(0),
+      visualize_3d_(false) {
+  visualizer_ = new PoseLandmarkROSVisualizer(&nh_);
+
   image_sub_ =
       it_.subscribe(input_image_topic, 5, &VIOAppNode::NewImageCallback, this);
   feature_track_window_name_ = "Feature_tracks";
@@ -48,22 +54,20 @@ void VIOAppNode::AddNewFrame(const cv::Mat &img) {
       keyframe_count_++;
       ROS_INFO("Added a keyframe.");
 
-      landmark_server_.PrintStats();
+      // landmark_server_.PrintStats();
 
       desc.copyTo(last_keyframe_desc_);
       last_keyframe_kp_.swap(kp);
 
       // Should use a new thread to do this.
-      if (keyframe_count_ % 10 == 0)
-        TriangulateFeatures();
+      if (keyframe_count_ == 10) TriangulateFeatures();
 
     } else {
       ROS_INFO("Dropped a new frame.");
       // TODO: Should do pnp here.
+      DrawFeatureTracks(img, kp, last_keyframe_kp_, matches);
     }
   }
-
-  DrawFeatureTracks(img, kp, last_keyframe_kp_, matches);
 }
 
 void VIOAppNode::TriangulateFeatures() {
@@ -75,9 +79,14 @@ void VIOAppNode::TriangulateFeatures() {
 
   K_initial = cv::Matx33d(1914, 0, 640, 0, 1914, 360, 0, 0, 1);
 
+  // output: points3d is vector< Mat(height = 3, width = 1) >
+  //         type : CV_32F
   landmark_server_.MakeFeatureVectorsForReconstruct(feature_vectors);
   pose_optimizer_.initialize3DPointsFromViews(
       num_frame, feature_vectors, K_initial, points3d, R_ests, t_ests, K_final);
+
+  if (visualize_3d_)
+    visualizer_->AddPointsWithCameras(points3d, R_ests, t_ests);
 }
 
 void VIOAppNode::DrawFeatureTracks(const cv::Mat &img,
