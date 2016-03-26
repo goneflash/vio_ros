@@ -46,7 +46,7 @@ void VIOAppNode::AddNewFrame(const cv::Mat &img) {
   vector<cv::KeyPoint> kp;
   cv::Mat desc;
   vector<cv::DMatch> matches;
-  feature_tracker_.TrackFeature(last_keyframe_desc_, img, kp, desc, matches);
+  feature_tracker_.TrackFeature(last_keyframe_kp_, last_keyframe_desc_, img, kp, desc, matches);
 
   if (use_keyframe_) {
     if (keyframe_selector_.isKeyframe(img, kp, matches)) {
