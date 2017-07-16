@@ -60,10 +60,10 @@ void VIOAppNode::AddNewFrame(const cv::Mat &img) {
       last_keyframe_kp_.swap(kp);
 
       // Should use a new thread to do this.
-      if (keyframe_count_ == 10) TriangulateFeatures();
+      if (keyframe_count_ == 5) TriangulateFeatures();
 
     } else {
-      ROS_INFO("Dropped a new frame.");
+      // ROS_INFO("Dropped a new frame.");
       // TODO: Should do pnp here.
       DrawFeatureTracks(img, kp, last_keyframe_kp_, matches);
     }
@@ -77,7 +77,7 @@ void VIOAppNode::TriangulateFeatures() {
   vector<cv::Mat> points3d;
   vector<cv::Mat> R_ests, t_ests;
 
-  K_initial = cv::Matx33d(1914, 0, 640, 0, 1914, 360, 0, 0, 1);
+  K_initial = cv::Matx33d(517.3, 0, 318.6, 0, 516.5, 255.3, 0, 0, 1);
 
   // output: points3d is vector< Mat(height = 3, width = 1) >
   //         type : CV_32F
